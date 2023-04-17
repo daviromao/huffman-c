@@ -127,21 +127,18 @@ int main(void)
 {
     PQ *pq = createPQ();
     int frequencyCount[256] = {0};
-    char *filename = "bocchi.jpg";
+    char *filename = "teste.txt";
     getFrequencies(filename, frequencyCount);
 
-    // Isso é requerido por conta da implementação com void*
-    int items[256];
     for (int i = 0; i < 256; i++)
-    {
-        items[i] = i;
-    }
+    {   
+        if(frequencyCount[i] == 0) continue;
 
-    // Enfileiramento
-    for (int i = 0; i < 256; i++)
-    {
-        enQ(pq, (void *)&items[i], frequencyCount[i], NULL, NULL);
+        int *value = (int*) malloc(sizeof(int));
+        *value = i;
+        enQ(pq, (void *)value, frequencyCount[i], NULL, NULL);
     }
+    
     printf("size=%d\n", pq->size);
     printPQ(pq, printInt);
 
