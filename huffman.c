@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+int INTERNAL_NODE = 256;
+
 typedef struct PQNode PQNode;
 typedef struct PQ PQ;
 struct PQNode
@@ -116,11 +118,47 @@ void getFrequencies(char *filename, int frequencies[256])
 
 // Isso aqui funciona só para a adição de 1 novo nó.
 // Tem que aplicar para todos, até que reste só um (que vai ser a root)
-void huffmanizeHead(PQ *pq, void *internalNodeDefault)
+PQNode *huffmanizeHead(PQ *pq)
 {
+    if(pq->head->next == NULL)
+    {
+        return deQ(pq);
+    }
+
     PQNode *left = deQ(pq);
     PQNode *right = deQ(pq);
-    enQ(pq, internalNodeDefault, left->priority + right->priority, left, right);
+
+    enQ(pq, (void *) &INTERNAL_NODE, left->priority + right->priority, left, right);
+    huffmanizeHead(pq);
+}
+
+void printNode(int b){
+        if(b == 42){
+            printf("\\*");
+        }
+        else if(b==92)
+        {
+            printf("\\\\");
+        }
+        else if(b==256)
+        {
+            printf("*");
+        }
+        else
+        {
+            printf("%c", b);
+        }
+}
+
+void printPreOrder(PQNode *bt)
+{
+    if (bt!=NULL)
+    {
+        int byte = *(int *)bt->item;
+        printNode(byte);
+        printPreOrder(bt->left);
+        printPreOrder(bt->right);
+    }
 }
 
 int main(void)
@@ -142,8 +180,8 @@ int main(void)
     printf("size=%d\n", pq->size);
     printPQ(pq, printInt);
 
-    // Essa função está incompleta
-    short internalNodeDefault = 256;
-    huffmanizeHead(pq, (void *)&internalNodeDefault);
+    PQNode *bt_head = huffmanizeHead(pq);
+    printPreOrder(bt_head);
+
     return 0;
 }
