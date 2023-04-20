@@ -109,7 +109,7 @@ void printHuff(Huff *huff, void (*printFun)(void *))
 
 void printInt(void *item)
 {
-    printf("%c ", *((int *)item));
+    printf("%d ", *((unsigned char *)item));
 }
 
 void getFrequencies(char *filename, ByteInfo bytes[256])
@@ -138,6 +138,27 @@ HuffNode *huffmanizeHead(Huff *huff)
 
     enQ(huff, (void *)&INTERNAL_NODE, left->priority + right->priority, left, right);
     huffmanizeHead(huff);
+}
+int isBitSet(unsigned char c, int i)
+{
+    unsigned char mask = 1 << i;
+    return mask & c;
+}
+void printByte(unsigned char byte)
+{
+    int i = 0;
+    for (int i = 7; i >= 0; i--)
+    {
+        if (isBitSet(byte, i))
+        {
+            printf("%d", 1);
+        }
+        else
+        {
+            printf("%d", 0);
+        }
+    }
+    printf("\n");
 }
 
 void printNode(void *b)
@@ -212,8 +233,13 @@ void saveHuffPreOrder(HuffNode *ht, LL *tree)
 
 int cmpChar(void *a, void *b)
 {
+    if (*(int *)b == INTERNAL_NODE)
+    {
+        return 0;
+    }
     unsigned char x = *(unsigned char *)a;
     unsigned char y = *(unsigned char *)b;
+    // printf("%d == %d\n", x, y);
     return x == y;
 }
 
@@ -224,9 +250,10 @@ int searchForByte(HuffNode *ht, LL *l, void *item, char marker,
     {
         return 0;
     }
-    // printf("noatual = %c\n", *(unsigned char *)ht->item);
+    // printf("noatual = %d - %d\n", *(unsigned char *)ht->item, *(int *)ht->item);
     if (cmp_fun(item, ht->item))
     {
+        // printf("acheiii\n");
         if (marker != '2')
         {
             addToHead(marker, l);
@@ -235,14 +262,17 @@ int searchForByte(HuffNode *ht, LL *l, void *item, char marker,
     }
     if (searchForByte(ht->left, l, item, '0', cmp_fun))
     {
+        // printf("hahahah marker=%d and %c\n", marker, marker);
         if (marker != '2')
         {
             addToHead(marker, l);
         }
+        // printf("hahahahahsssssss\n");
         return 1;
     }
     if (searchForByte(ht->right, l, item, '1', cmp_fun))
     {
+        // printf("hahahah marker=%d and %c\n", marker, marker);
         if (marker != '2')
         {
             addToHead(marker, l);
@@ -257,16 +287,22 @@ void getMappedBits(HuffNode *ht, ByteInfo bytes[])
 {
     for (int i = 0; i < 256; i++)
     {
+
         if (bytes[i].frequency == 0)
         {
             continue;
         }
+        // printf(">>>>>>>i=%d\n", i);
         LL *list = createLL();
         unsigned char c = bytes[i].byte;
+        // printByte(c);
         searchForByte(ht, list, (void *)&c, '2', cmpChar);
+        // printf("%d %c- lista: ", c, c);
+        // printLL(list);
         bytes[i].bits = list;
+        // printf(".......\n");
     }
-
+    // printf("\n");
     // for (int i = 0; i < 256; i++)
     // {
     //     if (bytes[i].frequency == 0)
@@ -295,29 +331,6 @@ void resetTray(char arr[])
     {
         arr[i] = '2';
     }
-}
-
-int isBitSet(unsigned char c, int i)
-{
-    unsigned char mask = 1 << i;
-    return mask & c;
-}
-
-void printByte(unsigned char byte)
-{
-    int i = 0;
-    for (int i = 7; i >= 0; i--)
-    {
-        if (isBitSet(byte, i))
-        {
-            printf("%d", 1);
-        }
-        else
-        {
-            printf("%d", 0);
-        }
-    }
-    printf("\n");
 }
 
 unsigned char set_array_to_byte(char a[])
@@ -368,7 +381,7 @@ void setHeaderByte(unsigned char *headerByte, int trashSize, int treeSize)
             headerByte[0] = setBit(headerByte[0], i);
         }
         i++;
-        printf("%d\n", trashSize % 2);
+        // printf("%d\n", trashSize % 2);
         trashSize /= 2;
     }
     i = 0;
@@ -390,7 +403,7 @@ void setHeaderByte(unsigned char *headerByte, int trashSize, int treeSize)
             headerByte[headerByteIndex] = setBit(headerByte[headerByteIndex], i);
         }
         i++;
-        printf("%d\n", treeSize % 2);
+        // printf("%d\n", treeSize % 2);
         treeSize /= 2;
     }
 }
@@ -477,10 +490,10 @@ void compressFile(char *filename, ByteInfo bytes[], LL *preOrderTree)
     fclose(tmp);
     fclose(compressed);
 
-    for (int i = 0; i < 2; i++)
-    {
-        printByte(headerByte[i]);
-    }
+    // for (int i = 0; i < 2; i++)
+    // {
+    //     printByte(headerByte[i]);
+    // }
 }
 
 int main(void)
@@ -488,7 +501,7 @@ int main(void)
     Huff *huff = createPQ();
     ByteInfo bytes[256];
     initBytes(bytes);
-    char *filename = "texto.txt";
+    char *filename = "whitebackground.webp";
 
     // Read frequencies
     getFrequencies(filename, bytes);
@@ -502,9 +515,7 @@ int main(void)
     }
 
     printf("---------------------- Huff Priority Q ----------------------\n");
-    printf("size=%d\n", huff->size);
     printHuff(huff, printInt);
-    printf("-------------------------------------------------------------\n");
 
     // Get huffman tree
     printf("----------------------- Preorder Tree -----------------------\n");
@@ -513,15 +524,15 @@ int main(void)
     printf("\n");
     LL *preOrderTree = createLL();
     saveHuffPreOrder(ht_head, preOrderTree);
-    printLL(preOrderTree);
-    printf("sizeoftree=%d\n", preOrderTree->size);
-    printf("\n");
-    printf("-------------------------------------------------------------\n");
+    // printLL(preOrderTree);
+    // printf("sizeoftree=%d\n", preOrderTree->size);
+    // printf("\n");
 
     // Map tree
     getMappedBits(ht_head, bytes);
-
-    // // Compress to file
+    // printf("ppppppppppppppppp\n");
+    // iterateOverNodes(bytes[0].bits);
+    // Compress to file
     compressFile(filename, bytes, preOrderTree);
     return 0;
 }
