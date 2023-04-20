@@ -23,7 +23,7 @@ LL *createLL()
     list->size = 0;
     return list;
 }
-void addToHead(unsigned char value, LL *list)
+void addToHead(LL *list, unsigned char value)
 {
     LLNode *n = malloc(sizeof(LLNode));
     n->value = value;
@@ -35,7 +35,7 @@ void addToHead(unsigned char value, LL *list)
     }
     list->size += 1;
 }
-void addToTail(unsigned char value, LL *list)
+void addToTail(LL *list, unsigned char value)
 {
     LLNode *n = malloc(sizeof(LLNode));
     n->value = value;
@@ -80,7 +80,7 @@ int printLL(LL *list)
     LLNode *p = list->head;
     while (p != NULL)
     {
-        printf("%c ", p->value);
+        printf("%c", p->value);
         p = p->next;
     }
     printf("\n");
