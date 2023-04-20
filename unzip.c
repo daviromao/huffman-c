@@ -22,27 +22,27 @@ Bt *create_bt(void *item, Bt *left, Bt *right)
     return new_bt;
 }
 
-Bt *recreate_bt(char *c, int *current)
+Bt *recreate_bt(char tree[], int *index)
 {
-    int item = *(c+*current);
+    int item = tree[*index];
     Bt *new_bt;
 
     if(item=='\\')
     {
-        new_bt = create_bt((void*)(c+(*current)+1), NULL, NULL);
-        *current+=2;
+        new_bt = create_bt((void*)&tree[*index+1], NULL, NULL);
+        *index+=2;
     }
     else if(item=='*')
     {
         new_bt = create_bt((void*)&INTERNAL_NODE, NULL, NULL);
-        *current+=1;
-        new_bt->left = recreate_bt(c, current);
-        new_bt->right = recreate_bt(c, current);
+        *index+=1;
+        new_bt->left = recreate_bt(tree, index);
+        new_bt->right = recreate_bt(tree, index);
     }
     else
     {
-        new_bt = create_bt((void*)(c+*current), NULL, NULL);
-        *current+=1;
+        new_bt = create_bt((void*)&tree[*index], NULL, NULL);
+        *index+=1;
     }
 
     return new_bt;
@@ -67,13 +67,24 @@ void printPreOrder(Bt *bt)
     }
 }
 
+int is_bit_i_set(unsigned char c, int i)
+{
+    unsigned char mask = 1 << i;
+    return mask & c;
+}
+
 int main()
 {
     char *filename = "utils/base.huff";
     FILE *compacted = fopen(filename, "rb");
 
+    fseek(compacted, 0, SEEK_END);
+    long totalSize = ftell(compacted);
+    rewind(compacted);
+
     unsigned char firstByte;
     fread(&firstByte, sizeof(unsigned char), 1, compacted);
+
     unsigned char secondByte;
     fread(&secondByte, sizeof(unsigned char), 1, compacted);
 
@@ -81,16 +92,38 @@ int main()
     int mask = 0b00011111;
     int treeSize = ((firstByte & mask) << 8) | secondByte;
     
-    printf("trash: %d\n", trash);
-    printf("treesize: %d\n", treeSize);
-    printf("tree: ");
+    unsigned char preOrderTree[treeSize];
+    fread(preOrderTree, sizeof(unsigned char), treeSize, compacted);
+    int preOrderIndex = 0;
+    Bt *mybt = recreate_bt(preOrderTree, &preOrderIndex);
 
-    unsigned char *c;
-    fread(c, sizeof(unsigned char), treeSize, compacted);
-    
-    int current = 0;
-    Bt *mybt = recreate_bt(c, &current);
-    printPreOrder(mybt);
+    long compressedSize = totalSize - 2 - treeSize;
+
+
+    char *unzipedFilename = "decompressed.txt";
+    FILE *unziped = fopen(unzipedFilename, "wb");
+
+    Bt indexBt = *mybt;
+    for(long i = 0; i < compressedSize; i++){
+        unsigned char byte;
+        fread(&byte, sizeof(unsigned char), 1, compacted);
+
+        int bitsToRead = i == (compressedSize-1) ? 8-trash : 8;
+
+        for(int j=7; j>=(8-bitsToRead); j--){
+            if(is_bit_i_set(byte, j)){
+                indexBt = *indexBt.right;
+            }else{
+                indexBt = *indexBt.left;
+            }
+
+            if(*(int *)indexBt.item != INTERNAL_NODE){
+                fwrite(indexBt.item, sizeof(unsigned char), 1, unziped);
+                indexBt = *mybt;
+            }
+        }
+    }
 
     fclose(compacted);
+    fclose(unziped);
 }
