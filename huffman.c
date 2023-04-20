@@ -4,20 +4,20 @@
 
 int INTERNAL_NODE = 256;
 
-typedef struct PQNode PQNode;
-typedef struct PQ PQ;
-struct PQNode
+typedef struct HuffNode HuffNode;
+typedef struct Huff Huff;
+struct HuffNode
 {
     void *item;
     int priority;
-    PQNode *next;
-    PQNode *left;
-    PQNode *right;
+    HuffNode *next;
+    HuffNode *left;
+    HuffNode *right;
 };
 
-struct PQ
+struct Huff
 {
-    PQNode *head;
+    HuffNode *head;
     int size;
 };
 
@@ -28,29 +28,29 @@ typedef struct ByteInfo
     LL *bits;
 } ByteInfo;
 
-PQ *createPQ()
+Huff *createPQ()
 {
-    PQ *newPQ = malloc(sizeof(PQ));
-    newPQ->size = 0;
-    newPQ->head = NULL;
-    return newPQ;
+    Huff *newHuff = malloc(sizeof(Huff));
+    newHuff->size = 0;
+    newHuff->head = NULL;
+    return newHuff;
 }
 
-void enQ(PQ *pq, void *item, int priority, PQNode *left, PQNode *right)
+void enQ(Huff *huff, void *item, int priority, HuffNode *left, HuffNode *right)
 {
-    PQNode *newNode = malloc(sizeof(PQNode));
+    HuffNode *newNode = malloc(sizeof(HuffNode));
     newNode->item = item;
     newNode->priority = priority;
     newNode->left = left;
     newNode->right = right;
-    if (pq->head == NULL || priority <= pq->head->priority)
+    if (huff->head == NULL || priority <= huff->head->priority)
     {
-        newNode->next = pq->head;
-        pq->head = newNode;
+        newNode->next = huff->head;
+        huff->head = newNode;
     }
     else
     {
-        PQNode *current = pq->head;
+        HuffNode *current = huff->head;
         while (current->next != NULL &&
                current->next->priority < priority)
         {
@@ -59,45 +59,45 @@ void enQ(PQ *pq, void *item, int priority, PQNode *left, PQNode *right)
         newNode->next = current->next;
         current->next = newNode;
     }
-    (pq->size)++;
+    (huff->size)++;
 }
 
-PQNode *deQ(PQ *pq)
+HuffNode *deQ(Huff *huff)
 {
-    if (pq->head == NULL)
+    if (huff->head == NULL)
     {
         return NULL;
     }
     else
     {
-        PQNode *node = pq->head;
-        pq->head = pq->head->next;
+        HuffNode *node = huff->head;
+        huff->head = huff->head->next;
         node->next = NULL;
-        (pq->size)--;
+        (huff->size)--;
         return node;
     }
 }
 
-int minimumPriority(PQ *pq)
+int minimumPriority(Huff *huff)
 {
-    if (pq->head == NULL)
+    if (huff->head == NULL)
     {
         return -1;
     }
     else
     {
-        return pq->head->priority;
+        return huff->head->priority;
     }
 }
 
-void printPQ(PQ *q, void (*printFun)(void *))
+void printHuff(Huff *huff, void (*printFun)(void *))
 {
-    if (q->head == NULL)
+    if (huff->head == NULL)
     {
-        printf("Empty Queue!\n");
+        printf("Empty Huffman Queue!\n");
         return;
     }
-    PQNode *current = q->head;
+    HuffNode *current = huff->head;
     while (current != NULL)
     {
         printFun(current->item);
@@ -126,18 +126,18 @@ void getFrequencies(char *filename, ByteInfo bytes[256])
 
 // Isso aqui funciona só para a adição de 1 novo nó.
 // Tem que aplicar para todos, até que reste só um (que vai ser a root)
-PQNode *huffmanizeHead(PQ *pq)
+HuffNode *huffmanizeHead(Huff *huff)
 {
-    if (pq->head->next == NULL)
+    if (huff->head->next == NULL)
     {
-        return deQ(pq);
+        return deQ(huff);
     }
 
-    PQNode *left = deQ(pq);
-    PQNode *right = deQ(pq);
+    HuffNode *left = deQ(huff);
+    HuffNode *right = deQ(huff);
 
-    enQ(pq, (void *)&INTERNAL_NODE, left->priority + right->priority, left, right);
-    huffmanizeHead(pq);
+    enQ(huff, (void *)&INTERNAL_NODE, left->priority + right->priority, left, right);
+    huffmanizeHead(huff);
 }
 
 void printNode(int b)
@@ -160,55 +160,52 @@ void printNode(int b)
     }
 }
 
-void printPreOrder(PQNode *bt)
+void printPreOrder(HuffNode *ht)
 {
-    if (bt != NULL)
+    if (ht != NULL)
     {
-        int byte = *(int *)bt->item;
+        int byte = *(int *)ht->item;
         printNode(byte);
-        printPreOrder(bt->left);
-        printPreOrder(bt->right);
+        printPreOrder(ht->left);
+        printPreOrder(ht->right);
     }
 }
 
-int search(PQNode *bt, LL *l, void *item, char marker, int (*cmp_fun)(void *, void *))
+void saveNode(int b, LL *tree)
 {
-    if (bt == NULL)
+    if (b == 42)
     {
-        return 0;
+        addToTail('\\', tree);
+        addToTail('*', tree);
+        // printf("\\*");
     }
+    else if (b == 92)
+    {
+        addToTail('\\', tree);
+        addToTail('\\', tree);
+        // printf("\\\\");
+    }
+    else if (b == 256)
+    {
+        addToTail('*', tree);
+        // printf("*");
+    }
+    else
+    {
+        addToTail(b, tree);
+        // printf("%c", b);
+    }
+}
 
-    printf("noatual = %c\n", *(unsigned char *)bt->item);
-    if (cmp_fun(item, bt->item))
+void saveHuffPreOrder(HuffNode *ht, LL *tree)
+{
+    if (ht != NULL)
     {
-        printf("acheiii!\n");
-        if (marker != '2')
-        {
-            addToHead(marker, l);
-        }
-        return 1;
+        int byte = *(int *)ht->item;
+        saveNode(byte, tree);
+        saveHuffPreOrder(ht->left, tree);
+        saveHuffPreOrder(ht->right, tree);
     }
-    int status;
-    status = search(bt->left, l, item, '0', cmp_fun);
-    if (status == 1)
-    {
-        if (marker != '2')
-        {
-            addToHead(marker, l);
-        }
-        return status;
-    }
-    status = search(bt->right, l, item, '1', cmp_fun);
-    if (status == 1)
-    {
-        if (marker != '2')
-        {
-            addToHead(marker, l);
-        }
-        return status;
-    }
-
-    return 0;
 }
 
 int cmpChar(void *a, void *b)
@@ -218,7 +215,43 @@ int cmpChar(void *a, void *b)
     return x == y;
 }
 
-void getMappedBits(PQNode *bt, ByteInfo bytes[])
+int searchForByte(HuffNode *ht, LL *l, void *item, char marker,
+                  int (*cmp_fun)(void *, void *))
+{
+    if (ht == NULL)
+    {
+        return 0;
+    }
+    // printf("noatual = %c\n", *(unsigned char *)ht->item);
+    if (cmp_fun(item, ht->item))
+    {
+        if (marker != '2')
+        {
+            addToHead(marker, l);
+        }
+        return 1;
+    }
+    if (searchForByte(ht->left, l, item, '0', cmp_fun))
+    {
+        if (marker != '2')
+        {
+            addToHead(marker, l);
+        }
+        return 1;
+    }
+    if (searchForByte(ht->right, l, item, '1', cmp_fun))
+    {
+        if (marker != '2')
+        {
+            addToHead(marker, l);
+        }
+        return 1;
+    }
+
+    return 0;
+}
+
+void getMappedBits(HuffNode *ht, ByteInfo bytes[])
 {
     for (int i = 0; i < 256; i++)
     {
@@ -228,20 +261,20 @@ void getMappedBits(PQNode *bt, ByteInfo bytes[])
         }
         LL *list = createLL();
         unsigned char c = bytes[i].byte;
-        search(bt, list, (void *)&c, '2', cmpChar);
+        searchForByte(ht, list, (void *)&c, '2', cmpChar);
         bytes[i].bits = list;
     }
 
-    for (int i = 0; i < 256; i++)
-    {
-        if (bytes[i].frequency == 0)
-        {
-            continue;
-        }
-        printf("%c:\n", bytes[i].byte);
-        iterateOverNodes(bytes[i].bits);
-        printf("\n");
-    }
+    // for (int i = 0; i < 256; i++)
+    // {
+    //     if (bytes[i].frequency == 0)
+    //     {
+    //         continue;
+    //     }
+    //     printf("%c:\n", bytes[i].byte);
+    //     iterateOverNodes(bytes[i].bits);
+    //     printf("\n");
+    // }
 }
 
 void initBytes(ByteInfo bytes[])
@@ -260,6 +293,29 @@ void resetTray(char arr[])
     {
         arr[i] = '2';
     }
+}
+
+int isBitSet(unsigned char c, int i)
+{
+    unsigned char mask = 1 << i;
+    return mask & c;
+}
+
+void printByte(unsigned char byte)
+{
+    int i = 0;
+    for (int i = 7; i >= 0; i--)
+    {
+        if (isBitSet(byte, i))
+        {
+            printf("%d", 1);
+        }
+        else
+        {
+            printf("%d", 0);
+        }
+    }
+    printf("\n");
 }
 
 unsigned char set_array_to_byte(char a[])
@@ -281,7 +337,7 @@ unsigned char set_list_to_byte(LL *list)
 {
     int i = 0;
     unsigned char byte = 0;
-    Node *current = list->head;
+    LLNode *current = list->head;
     while (current != NULL)
     {
         if (current->value == '1')
@@ -294,11 +350,53 @@ unsigned char set_list_to_byte(LL *list)
     }
     return byte;
 }
+unsigned char setBit(unsigned char c, int i)
+{
+    unsigned char mask = 1 << i;
+    return mask | c;
+}
 
-void compress(ByteInfo bytes[], char *filename)
+void setHeaderByte(unsigned char *headerByte, int trashSize, int treeSize)
+{
+    int i = 5;
+    while (trashSize != 0)
+    {
+        if (trashSize % 2 == 1)
+        {
+            headerByte[0] = setBit(headerByte[0], i);
+        }
+        i++;
+        printf("%d\n", trashSize % 2);
+        trashSize /= 2;
+    }
+    i = 0;
+    int headerByteIndex = 1;
+    while (treeSize != 0)
+    {
+        if (i > 4 && headerByteIndex == 0)
+        {
+            printf("header overflow. Tree is too big.\n");
+            break;
+        }
+        if (i > 7)
+        {
+            i = 0;
+            headerByteIndex--;
+        }
+        if (treeSize % 2 == 1)
+        {
+            headerByte[headerByteIndex] = setBit(headerByte[headerByteIndex], i);
+        }
+        i++;
+        printf("%d\n", treeSize % 2);
+        treeSize /= 2;
+    }
+}
+
+int compressToTmpFile(char *filename, ByteInfo bytes[])
 {
     FILE *f = fopen(filename, "rb");
-    FILE *cf = fopen("compressed.huff", "wb");
+    FILE *cf = fopen("tmp.huff", "wb");
 
     unsigned char c;
     char bitTray[8] = {'2'};
@@ -306,7 +404,7 @@ void compress(ByteInfo bytes[], char *filename)
 
     while (fread(&c, sizeof(char), 1, f) > 0)
     {
-        Node *bits = bytes[c].bits->head;
+        LLNode *bits = bytes[c].bits->head;
         printf("\nbyte=%c\n", c);
         while (bits != NULL)
         {
@@ -324,10 +422,12 @@ void compress(ByteInfo bytes[], char *filename)
             bits = bits->next;
         }
     }
+    int trashSize = 0;
     if (appendIndex < 8)
     {
         printf("ai=%d\n", appendIndex);
-        printf("tem lixo de tamanho: %d\n", 8 - appendIndex);
+        trashSize = 8 - appendIndex;
+        printf("lixo=%d bits\n", trashSize);
         while (appendIndex != 8)
         {
             bitTray[appendIndex++] = 0;
@@ -342,41 +442,84 @@ void compress(ByteInfo bytes[], char *filename)
     fwrite(&compressedChar, sizeof(char), 1, cf);
     appendIndex = 0;
     resetTray(bitTray);
-
     fclose(f);
     fclose(cf);
+    return trashSize;
+}
+
+void compressFile(char *filename, ByteInfo bytes[], LL *preOrderTree)
+{
+    int trashSize = compressToTmpFile(filename, bytes);
+
+    unsigned char headerByte[2] = {0};
+    setHeaderByte(headerByte, trashSize, preOrderTree->size);
+
+    FILE *tmp = fopen("tmp.huff", "rb");
+    FILE *compressed = fopen("compressed.huff", "wb");
+
+    fwrite(headerByte, sizeof(char), 2, compressed);
+
+    LLNode *current = preOrderTree->head;
+    while (current != NULL)
+    {
+        fwrite(&(current->value), sizeof(char), 1, compressed);
+        current = current->next;
+    }
+
+    unsigned char fileBytes;
+    while (fread(&fileBytes, sizeof(char), 1, tmp) > 0)
+    {
+        fwrite(&fileBytes, sizeof(char), 1, compressed);
+    }
+
+    fclose(tmp);
+    fclose(compressed);
+
+    for (int i = 0; i < 2; i++)
+    {
+        printByte(headerByte[i]);
+    }
 }
 
 int main(void)
 {
-    PQ *pq = createPQ();
-    // int frequencyCount[256] = {0};
+    Huff *huff = createPQ();
     ByteInfo bytes[256];
     initBytes(bytes);
     char *filename = "input_slide.txt";
+
+    // Read frequencies
     getFrequencies(filename, bytes);
 
+    // Populate PriorityQueue
     for (int i = 0; i < 256; i++)
     {
         if (bytes[i].frequency == 0)
             continue;
-
-        // int *value = (int *)malloc(sizeof(int));
-        // *value = i;
-        enQ(pq, (void *)&bytes[i].byte, bytes[i].frequency, NULL, NULL);
+        enQ(huff, (void *)&bytes[i].byte, bytes[i].frequency, NULL, NULL);
     }
 
-    printf("size=%d\n", pq->size);
-    printPQ(pq, printInt);
+    printf("---------------------- Huff Priority Q ----------------------\n");
+    printf("size=%d\n", huff->size);
+    printHuff(huff, printInt);
+    printf("-------------------------------------------------------------\n");
 
-    PQNode *bt_head = huffmanizeHead(pq);
-    printPreOrder(bt_head);
+    // Get huffman tree
+    printf("----------------------- Preorder Tree -----------------------\n");
+    HuffNode *ht_head = huffmanizeHead(huff);
+    printPreOrder(ht_head);
     printf("\n");
-    // unsigned char c = 'E';
-    // LL l = createLL();
-    // search(bt_head, &l, (void *)&c, '2', cmpChar);
-    // iterateOverNodes(&l);
-    getMappedBits(bt_head, bytes);
-    compress(bytes, filename);
+    LL *preOrderTree = createLL();
+    saveHuffPreOrder(ht_head, preOrderTree);
+    printLL(preOrderTree);
+    printf("sizeoftree=%d\n", preOrderTree->size);
+    printf("\n");
+    printf("-------------------------------------------------------------\n");
+
+    // Map tree
+    getMappedBits(ht_head, bytes);
+
+    // // Compress to file
+    compressFile(filename, bytes, preOrderTree);
     return 0;
 }

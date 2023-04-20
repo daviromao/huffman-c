@@ -5,6 +5,7 @@
 # include files with any extension
 !*.*
 
+.vscode
 deprected
 teste*
 teste*.*

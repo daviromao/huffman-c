@@ -1,20 +1,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-struct Node
+typedef struct LLNode LLNode;
+struct LLNode
 {
-    char value;
-    struct Node *next;
+    unsigned char value;
+    LLNode *next;
 };
-typedef struct Node Node;
 
-struct LL
+typedef struct LL
 {
-    struct Node *head;
-    struct Node *tail;
+    LLNode *head;
+    LLNode *tail;
     int size;
-};
-typedef struct LL LL;
+} LL;
 
 LL *createLL()
 {
@@ -24,9 +23,9 @@ LL *createLL()
     list->size = 0;
     return list;
 }
-void addToHead(char value, LL *list)
+void addToHead(unsigned char value, LL *list)
 {
-    Node *n = malloc(sizeof(Node));
+    LLNode *n = malloc(sizeof(LLNode));
     n->value = value;
     n->next = list->head;
     list->head = n;
@@ -36,9 +35,9 @@ void addToHead(char value, LL *list)
     }
     list->size += 1;
 }
-void addToTail(char value, LL *list)
+void addToTail(unsigned char value, LL *list)
 {
-    Node *n = malloc(sizeof(Node));
+    LLNode *n = malloc(sizeof(LLNode));
     n->value = value;
     n->next = NULL;
     if (list->head == NULL && list->tail == NULL)
@@ -61,11 +60,29 @@ int iterateOverNodes(LL *list)
         return 0;
     }
 
-    Node *p = list->head;
+    LLNode *p = list->head;
     while (p != NULL)
     {
         printf("HEAD (%p) -> Node(val=%c, nxt=%p)\n", p, p->value, p->next);
         p = p->next;
     }
+    return 1;
+}
+
+int printLL(LL *list)
+{
+    if (list->head == NULL)
+    {
+        printf("This list is empty!\n");
+        return 0;
+    }
+
+    LLNode *p = list->head;
+    while (p != NULL)
+    {
+        printf("%c", p->value);
+        p = p->next;
+    }
+    printf("\n");
     return 1;
 }
