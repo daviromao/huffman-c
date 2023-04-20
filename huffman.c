@@ -140,23 +140,23 @@ HuffNode *huffmanizeHead(Huff *huff)
     huffmanizeHead(huff);
 }
 
-void printNode(int b)
+void printNode(void *b)
 {
-    if (b == 42)
+    if (*(unsigned char *)b == 42)
     {
         printf("\\*");
     }
-    else if (b == 92)
+    else if (*(unsigned char *)b == 92)
     {
         printf("\\\\");
     }
-    else if (b == 256)
+    else if (*(int *)b == 256)
     {
         printf("*");
     }
     else
     {
-        printf("%c", b);
+        printf("%d", *(unsigned char *)b);
     }
 }
 
@@ -164,8 +164,10 @@ void printPreOrder(HuffNode *ht)
 {
     if (ht != NULL)
     {
-        int byte = *(int *)ht->item;
-        printNode(byte);
+        // int byte = *(int *)ht->item;
+        // printNode(byte);
+        printNode(ht->item);
+        // printf("%d ", ()ht->item);
         printPreOrder(ht->left);
         printPreOrder(ht->right);
     }
@@ -405,19 +407,19 @@ int compressToTmpFile(char *filename, ByteInfo bytes[])
     while (fread(&c, sizeof(char), 1, f) > 0)
     {
         LLNode *bits = bytes[c].bits->head;
-        printf("\nbyte=%c\n", c);
+        // printf("\nbyte=%c\n", c);
         while (bits != NULL)
         {
             if (appendIndex == 8)
             {
                 unsigned char compressedChar = set_array_to_byte(bitTray);
-                printf("chegou em 8, salvando no arquivo o byte %d\n--------\n", compressedChar);
+                // printf("chegou em 8, salvando no arquivo o byte %d\n--------\n", compressedChar);
                 fwrite(&compressedChar, sizeof(char), 1, cf);
                 appendIndex = 0;
                 resetTray(bitTray);
                 continue;
             }
-            printf("bit=%c ai=%d\n", bits->value, appendIndex);
+            // printf("bit=%c ai=%d\n", bits->value, appendIndex);
             bitTray[appendIndex++] = bits->value;
             bits = bits->next;
         }
@@ -425,9 +427,9 @@ int compressToTmpFile(char *filename, ByteInfo bytes[])
     int trashSize = 0;
     if (appendIndex < 8)
     {
-        printf("ai=%d\n", appendIndex);
+        // printf("ai=%d\n", appendIndex);
         trashSize = 8 - appendIndex;
-        printf("lixo=%d bits\n", trashSize);
+        // printf("lixo=%d bits\n", trashSize);
         while (appendIndex != 8)
         {
             bitTray[appendIndex++] = 0;
@@ -438,7 +440,7 @@ int compressToTmpFile(char *filename, ByteInfo bytes[])
         printf("lixo é zero!\n");
     }
     unsigned char compressedChar = set_array_to_byte(bitTray);
-    printf("chegou em 8, salvando no arquivo o byte %d\n--------\n", compressedChar);
+    // printf("chegou em 8, salvando no arquivo o byte %d\n--------\n", compressedChar);
     fwrite(&compressedChar, sizeof(char), 1, cf);
     appendIndex = 0;
     resetTray(bitTray);
@@ -486,7 +488,7 @@ int main(void)
     Huff *huff = createPQ();
     ByteInfo bytes[256];
     initBytes(bytes);
-    char *filename = "input_slide.txt";
+    char *filename = "texto.txt";
 
     // Read frequencies
     getFrequencies(filename, bytes);

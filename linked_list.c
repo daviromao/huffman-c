@@ -80,7 +80,7 @@ int printLL(LL *list)
     LLNode *p = list->head;
     while (p != NULL)
     {
-        printf("%c", p->value);
+        printf("%d ", p->value);
         p = p->next;
     }
     printf("\n");
