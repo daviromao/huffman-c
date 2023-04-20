@@ -111,27 +111,21 @@ int searchByte(HuffNode *ht, LL *list, void *item, char marker,
     if (cmpFun(item, ht->item))
     {
         if (marker)
-        {
             addToHead(list, marker);
-        }
         return 1;
     }
 
     if (searchByte(ht->left, list, item, '0', cmpFun))
     {
         if (marker)
-        {
             addToHead(list, marker);
-        }
         return 1;
     }
 
     if (searchByte(ht->right, list, item, '1', cmpFun))
     {
         if (marker)
-        {
             addToHead(list, marker);
-        }
         return 1;
     }
 
@@ -144,9 +138,8 @@ void getMappedBits(HuffNode *ht, ByteInfo bytes[])
     {
 
         if (bytes[i].frequency == 0)
-        {
             continue;
-        }
+
         LL *list = createLL();
         unsigned char c = bytes[i].byte;
         searchByte(ht, list, (void *)&c, 0, cmpUChar);
