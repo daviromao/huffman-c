@@ -13,6 +13,7 @@ test*.*
 teste
 test
 *.huff
+text.txt
 # Prerequisites
 *.d
 

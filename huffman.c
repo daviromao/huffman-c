@@ -177,7 +177,7 @@ void printNode(void *b)
     }
     else
     {
-        printf("%d", *(unsigned char *)b);
+        printf("%c", *(unsigned char *)b);
     }
 }
 
@@ -411,52 +411,72 @@ void setHeaderByte(unsigned char *headerByte, int trashSize, int treeSize)
 int compressToTmpFile(char *filename, ByteInfo bytes[])
 {
     FILE *f = fopen(filename, "rb");
-    FILE *cf = fopen("tmp.huff", "wb");
+    FILE *cf = fopen("tmp", "wb");
 
-    unsigned char c;
-    char bitTray[8] = {'2'};
-    int appendIndex = 0;
-
-    while (fread(&c, sizeof(char), 1, f) > 0)
+    unsigned char byte;
+    unsigned char compressedByte = 0;
+    // char bitTray[8] = {'2'};
+    // int appendIndex = 0;
+    int i = 7;
+    while (fread(&byte, sizeof(char), 1, f) > 0)
     {
-        LLNode *bits = bytes[c].bits->head;
+        LLNode *bits = bytes[byte].bits->head;
         // printf("\nbyte=%c\n", c);
+
         while (bits != NULL)
         {
-            if (appendIndex == 8)
+            if (i < 0)
             {
-                unsigned char compressedChar = set_array_to_byte(bitTray);
-                // printf("chegou em 8, salvando no arquivo o byte %d\n--------\n", compressedChar);
-                fwrite(&compressedChar, sizeof(char), 1, cf);
-                appendIndex = 0;
-                resetTray(bitTray);
-                continue;
+                // printf("i=%d\n", i);
+                // printByte(compressedByte);
+                fwrite(&compressedByte, sizeof(char), 1, cf);
+                compressedByte = 0;
+                i = 7;
             }
-            // printf("bit=%c ai=%d\n", bits->value, appendIndex);
-            bitTray[appendIndex++] = bits->value;
+            if (bits->value == '1')
+            {
+                compressedByte = setBit(compressedByte, i);
+            }
+            i--;
+            // if (appendIndex == 8)
+            // {
+            //     unsigned char compressedChar = set_array_to_byte(bitTray);
+            //     // printf("chegou em 8, salvando no arquivo o byte %d\n--------\n", compressedChar);
+            //     fwrite(&compressedChar, sizeof(char), 1, cf);
+            //     appendIndex = 0;
+            //     resetTray(bitTray);
+            //     continue;
+            // }
+            // // printf("bit=%c ai=%d\n", bits->value, appendIndex);
+            // bitTray[appendIndex++] = bits->value;
             bits = bits->next;
         }
     }
-    int trashSize = 0;
-    if (appendIndex < 8)
-    {
-        // printf("ai=%d\n", appendIndex);
-        trashSize = 8 - appendIndex;
-        // printf("lixo=%d bits\n", trashSize);
-        while (appendIndex != 8)
-        {
-            bitTray[appendIndex++] = 0;
-        }
-    }
-    else
-    {
-        printf("lixo é zero!\n");
-    }
-    unsigned char compressedChar = set_array_to_byte(bitTray);
-    // printf("chegou em 8, salvando no arquivo o byte %d\n--------\n", compressedChar);
-    fwrite(&compressedChar, sizeof(char), 1, cf);
-    appendIndex = 0;
-    resetTray(bitTray);
+    int trashSize = i + 1;
+    // printf("i=%d, trash=%d\n", i, trashSize);
+    // printByte(compressedByte);
+    fwrite(&compressedByte, sizeof(char), 1, cf);
+
+    // int trashSize = 0;
+    // if (appendIndex < 8)
+    // {
+    //     // printf("ai=%d\n", appendIndex);
+    //     trashSize = 8 - appendIndex;
+    //     // printf("lixo=%d bits\n", trashSize);
+    //     while (appendIndex != 8)
+    //     {
+    //         bitTray[appendIndex++] = 0;
+    //     }
+    // }
+    // else
+    // {
+    //     printf("lixo é zero!\n");
+    // }
+    // unsigned char compressedChar = set_array_to_byte(bitTray);
+    // // printf("chegou em 8, salvando no arquivo o byte %d\n--------\n", compressedChar);
+    // fwrite(&compressedChar, sizeof(char), 1, cf);
+    // appendIndex = 0;
+    // resetTray(bitTray);
     fclose(f);
     fclose(cf);
     return trashSize;
@@ -469,7 +489,7 @@ void compressFile(char *filename, ByteInfo bytes[], LL *preOrderTree)
     unsigned char headerByte[2] = {0};
     setHeaderByte(headerByte, trashSize, preOrderTree->size);
 
-    FILE *tmp = fopen("tmp.huff", "rb");
+    FILE *tmp = fopen("tmp", "rb");
     FILE *compressed = fopen("compressed.huff", "wb");
 
     fwrite(headerByte, sizeof(char), 2, compressed);
@@ -501,7 +521,7 @@ int main(void)
     Huff *huff = createPQ();
     ByteInfo bytes[256];
     initBytes(bytes);
-    char *filename = "whitebackground.webp";
+    char *filename = "input_slide.txt";
 
     // Read frequencies
     getFrequencies(filename, bytes);
