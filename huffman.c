@@ -136,7 +136,7 @@ HuffNode *huffmanizeHead(Huff *huff)
     HuffNode *left = deQ(huff);
     HuffNode *right = deQ(huff);
 
-    enQ(huff, (void *)&INTERNAL_NODE, left->priority + right->priority, left, right);
+    enQ(huff, NULL, left->priority + right->priority, left, right);
     huffmanizeHead(huff);
 }
 int isBitSet(unsigned char c, int i)
@@ -161,85 +161,67 @@ void printByte(unsigned char byte)
     printf("\n");
 }
 
-void printNode(void *b)
-{
-    if (*(unsigned char *)b == 42)
-    {
-        printf("\\*");
-    }
-    else if (*(unsigned char *)b == 92)
-    {
-        printf("\\\\");
-    }
-    else if (*(int *)b == 256)
-    {
-        printf("*");
-    }
-    else
-    {
-        printf("%c", *(unsigned char *)b);
-    }
-}
-
 void printPreOrder(HuffNode *ht)
 {
     if (ht != NULL)
     {
-        // int byte = *(int *)ht->item;
-        // printNode(byte);
-        printNode(ht->item);
-        // printf("%d ", ()ht->item);
+        if (ht->item == NULL)
+        {
+            printf("*");
+        }
+        else if (*(unsigned char *)ht->item == '*')
+        {
+            printf("\\*");
+        }
+        else if (*(int *)ht->item == '\\')
+        {
+            printf("\\\\");
+        }
+        else
+        {
+            printf("%c", *(unsigned char *)ht->item);
+        }
         printPreOrder(ht->left);
         printPreOrder(ht->right);
     }
 }
 
-void saveNode(int b, LL *tree)
-{
-    if (b == 42)
-    {
-        addToTail('\\', tree);
-        addToTail('*', tree);
-        // printf("\\*");
-    }
-    else if (b == 92)
-    {
-        addToTail('\\', tree);
-        addToTail('\\', tree);
-        // printf("\\\\");
-    }
-    else if (b == 256)
-    {
-        addToTail('*', tree);
-        // printf("*");
-    }
-    else
-    {
-        addToTail(b, tree);
-        // printf("%c", b);
-    }
-}
-
-void saveHuffPreOrder(HuffNode *ht, LL *tree)
+void saveHuffPreOrder(HuffNode *ht, LL *preOrderTree)
 {
     if (ht != NULL)
     {
-        int byte = *(int *)ht->item;
-        saveNode(byte, tree);
-        saveHuffPreOrder(ht->left, tree);
-        saveHuffPreOrder(ht->right, tree);
+        if (ht->item == NULL)
+        {
+            addToTail('*', preOrderTree);
+        }
+        else if (*(unsigned char *)ht->item == '*')
+        {
+            addToTail('\\', preOrderTree);
+            addToTail('*', preOrderTree);
+        }
+        else if (*(int *)ht->item == '\\')
+        {
+            addToTail('\\', preOrderTree);
+            addToTail('\\', preOrderTree);
+        }
+        else
+        {
+            addToTail(*(unsigned char *)ht->item, preOrderTree);
+        }
+        saveHuffPreOrder(ht->left, preOrderTree);
+        saveHuffPreOrder(ht->right, preOrderTree);
     }
 }
 
 int cmpChar(void *a, void *b)
 {
-    if (*(int *)b == INTERNAL_NODE)
+    if (b == NULL || a == NULL)
     {
         return 0;
     }
     unsigned char x = *(unsigned char *)a;
     unsigned char y = *(unsigned char *)b;
-    // printf("%d == %d\n", x, y);
+    printf("%d == %d\n", x, y);
     return x == y;
 }
 
@@ -250,10 +232,19 @@ int searchForByte(HuffNode *ht, LL *l, void *item, char marker,
     {
         return 0;
     }
-    // printf("noatual = %d - %d\n", *(unsigned char *)ht->item, *(int *)ht->item);
+    printf("hahahahah\n");
+    if (ht->item != NULL)
+    {
+        printf("noatual = %c\n", *(unsigned char *)ht->item);
+    }
+    else
+    {
+        printf("nulllll\n");
+    }
+    printf("heheheheheheh\n");
     if (cmp_fun(item, ht->item))
     {
-        // printf("acheiii\n");
+        printf("acheiii\n");
         if (marker != '2')
         {
             addToHead(marker, l);
@@ -297,9 +288,11 @@ void getMappedBits(HuffNode *ht, ByteInfo bytes[])
         unsigned char c = bytes[i].byte;
         // printByte(c);
         searchForByte(ht, list, (void *)&c, '2', cmpChar);
+        printf("hahahahah\n");
         // printf("%d %c- lista: ", c, c);
         // printLL(list);
-        bytes[i].bits = list;
+        bytes[i]
+            .bits = list;
         // printf(".......\n");
     }
     // printf("\n");
@@ -521,7 +514,7 @@ int main(void)
     Huff *huff = createPQ();
     ByteInfo bytes[256];
     initBytes(bytes);
-    char *filename = "input_slide.txt";
+    char *filename = "text.txt";
 
     // Read frequencies
     getFrequencies(filename, bytes);
@@ -544,9 +537,9 @@ int main(void)
     printf("\n");
     LL *preOrderTree = createLL();
     saveHuffPreOrder(ht_head, preOrderTree);
-    // printLL(preOrderTree);
-    // printf("sizeoftree=%d\n", preOrderTree->size);
-    // printf("\n");
+    printLL(preOrderTree);
+    printf("sizeoftree=%d\n", preOrderTree->size);
+    printf("\n");
 
     // Map tree
     getMappedBits(ht_head, bytes);
