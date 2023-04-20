@@ -103,7 +103,7 @@ int main()
     char *unzipedFilename = "decompressed.txt";
     FILE *unziped = fopen(unzipedFilename, "wb");
 
-    Bt indexBt = *mybt;
+    Bt *indexBt = mybt;
     for(long i = 0; i < compressedSize; i++){
         unsigned char byte;
         fread(&byte, sizeof(unsigned char), 1, compacted);
@@ -112,14 +112,14 @@ int main()
 
         for(int j=7; j>=(8-bitsToRead); j--){
             if(is_bit_i_set(byte, j)){
-                indexBt = *indexBt.right;
+                indexBt = indexBt->right;
             }else{
-                indexBt = *indexBt.left;
+                indexBt = indexBt->left;
             }
 
-            if(*(int *)indexBt.item != INTERNAL_NODE){
-                fwrite(indexBt.item, sizeof(unsigned char), 1, unziped);
-                indexBt = *mybt;
+            if(*(int *)indexBt->item != INTERNAL_NODE){
+                fwrite(indexBt->item, sizeof(unsigned char), 1, unziped);
+                indexBt = mybt;
             }
         }
     }
