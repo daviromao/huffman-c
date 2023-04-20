@@ -21,7 +21,13 @@ Bt *create_bt(void *item, Bt *left, Bt *right)
     return new_bt;
 }
 
-Bt *recreate_bt(unsigned char tree[], int *index)
+int isBitSet(unsigned char c, int i)
+{
+    unsigned char mask = 1 << i;
+    return mask & c;
+}
+
+Bt *recreateBt(unsigned char tree[], int *index)
 {
     int item = tree[*index];
     Bt *new_bt;
@@ -35,8 +41,8 @@ Bt *recreate_bt(unsigned char tree[], int *index)
     {
         new_bt = create_bt(NULL, NULL, NULL);
         *index+=1;
-        new_bt->left = recreate_bt(tree, index);
-        new_bt->right = recreate_bt(tree, index);
+        new_bt->left = recreateBt(tree, index);
+        new_bt->right = recreateBt(tree, index);
     }
     else
     {
@@ -46,65 +52,79 @@ Bt *recreate_bt(unsigned char tree[], int *index)
     return new_bt;
 }
 
-int is_bit_i_set(unsigned char c, int i)
+long getTotalSize(FILE *f)
 {
-    unsigned char mask = 1 << i;
-    return mask & c;
+    fseek(f, 0, SEEK_END);
+    long size = ftell(f);
+    rewind(f);
+
+    return size;
 }
 
-int main()
+void calculateTreeAndTrashSize(FILE *file, int *treeSize, int *trashSize)
 {
-    char *filename = "utils/base.huff";
-    FILE *compacted = fopen(filename, "rb");
-
-    fseek(compacted, 0, SEEK_END);
-    long totalSize = ftell(compacted);
-    rewind(compacted);
-
     unsigned char firstByte;
-    fread(&firstByte, sizeof(unsigned char), 1, compacted);
-
+    fread(&firstByte, sizeof(unsigned char), 1, file);
     unsigned char secondByte;
-    fread(&secondByte, sizeof(unsigned char), 1, compacted);
+    fread(&secondByte, sizeof(unsigned char), 1, file);
 
-    int trash = firstByte >> 5;
     int mask = 0b00011111;
-    int treeSize = ((firstByte & mask) << 8) | secondByte;
-    
-    unsigned char preOrderTree[treeSize];
-    fread(preOrderTree, sizeof(unsigned char), treeSize, compacted);
-    int preOrderIndex = 0;
-    Bt *mybt = recreate_bt(preOrderTree, &preOrderIndex);
 
-    printPreOrder(mybt);
+    *trashSize = firstByte >> 5;
+    *treeSize = ((firstByte & mask) << 8) | secondByte;
+}
 
-    long compressedSize = totalSize - 2 - treeSize;
+void unzipFile(FILE *zipedFile, Bt *treeHead, long totalSize, int treeSize, int trashSize)
+{
+    int headerSize = 2 + treeSize;
+    long compressedSize = totalSize - headerSize;
 
     char *unzipedFilename = "hello.txt";
-    FILE *unziped = fopen(unzipedFilename, "wb");
+    FILE *unzipped = fopen(unzipedFilename, "wb");
 
-    Bt *indexBt = mybt;
-
-    for(long i = 0; i < compressedSize; i++){
+    Bt *indexBt = treeHead;
+    for(long i = 0; i < compressedSize; i++)
+    {
         unsigned char byte;
-        fread(&byte, sizeof(unsigned char), 1, compacted);
-
-        int bitsToRead = i == (compressedSize-1) ? 8-trash : 8;
-
-        for(int j=7; j>=(8-bitsToRead); j--){
-            if(is_bit_i_set(byte, j)){
+        fread(&byte, sizeof(unsigned char), 1, zipedFile);
+        int bitsToRead = i == (compressedSize-1) ? 8-trashSize : 8;
+        for(int j=7; j>=(8-bitsToRead); j--)
+        {
+            if(isBitSet(byte, j))
+            {
                 indexBt = indexBt->right;
             }else{
                 indexBt = indexBt->left;
             }
 
-            if((indexBt->left == NULL) && (indexBt->right == NULL)){
-                fwrite((unsigned char*)indexBt->item, sizeof(unsigned char), 1, unziped);
-                indexBt = mybt;
+            if((indexBt->left == NULL) && (indexBt->right == NULL))
+            {
+                fwrite((unsigned char*)indexBt->item, sizeof(unsigned char), 1, unzipped);
+                indexBt = treeHead;
             }
         }
     }
 
-    fclose(compacted);
-    fclose(unziped);
+    fclose(unzipped);
+}
+
+int main()
+{
+    char *filename = "utils/base.huff";
+    FILE *zippedFile = fopen(filename, "rb");
+
+    long totalSize = getTotalSize(zippedFile);
+
+    int treeSize, trashSize;
+    calculateTreeAndTrashSize(zippedFile, &treeSize, &trashSize);
+
+    unsigned char preOrderTree[treeSize];
+    fread(preOrderTree, sizeof(unsigned char), treeSize, zippedFile);
+    
+    int preOrderIndex = 0;
+    Bt *tree = recreateBt(preOrderTree, &preOrderIndex);
+
+    unzipFile(zippedFile, tree, totalSize, treeSize, trashSize);
+
+    fclose(zippedFile);
 }
