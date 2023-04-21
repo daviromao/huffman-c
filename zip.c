@@ -192,7 +192,7 @@ void setHeaderBytes(unsigned char *headerBytes, int trashSize, int treeSize)
     }
 }
 
-int compressToTmpFile(char *filename, ByteInfo bytes[])
+int zipTmpFile(char *filename, ByteInfo bytes[])
 {
     FILE *original = fopen(filename, "rb");
     FILE *cf = fopen("tmp", "wb");
@@ -230,9 +230,9 @@ int compressToTmpFile(char *filename, ByteInfo bytes[])
     return trashSize;
 }
 
-void compressFile(char *filename, ByteInfo bytes[], LL *preOrderTree)
+void zipFile(char *filename, ByteInfo bytes[], LL *preOrderTree)
 {
-    int trashSize = compressToTmpFile(filename, bytes);
+    int trashSize = zipTmpFile(filename, bytes);
 
     unsigned char headerBytes[2] = {0};
     setHeaderBytes(headerBytes, trashSize, preOrderTree->size);
@@ -264,7 +264,7 @@ void compressFile(char *filename, ByteInfo bytes[], LL *preOrderTree)
 
 int main(void)
 {
-    char *filename = "input_slide.txt";
+    char *filename = "utils/input_slide.txt";
 
     ByteInfo bytes[256];
     initBytes(bytes);
@@ -298,7 +298,7 @@ int main(void)
     getMappedBits(ht_head, bytes);
 
     // Compress to file
-    compressFile(filename, bytes, preOrderTree);
+    zipFile(filename, bytes, preOrderTree);
     printf("Arquivo comprimido para %s.huff!\n", filename);
     return 0;
 }
