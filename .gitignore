@@ -1,5 +1,20 @@
-deprected
+# Exclude everything
+*
+# Include folders
+!*/
+# include files with any extension
+!*.*
 
+.vscode
+deprected
+teste*
+teste*.*
+test*.*
+teste
+test
+*.huff
+text.txt
+examples
 # Prerequisites
 *.d
 
