@@ -86,7 +86,7 @@ void saveHuffPreOrder(HuffNode *ht, LL *preOrderTree)
             addToTail(preOrderTree, '\\');
             addToTail(preOrderTree, '*');
         }
-        else if (*(int *)ht->item == '\\')
+        else if (*(unsigned char *)ht->item == '\\')
         {
             addToTail(preOrderTree, '\\');
             addToTail(preOrderTree, '\\');
@@ -264,7 +264,9 @@ void zipFile(char *filename, ByteInfo bytes[], LL *preOrderTree)
 
 int main(void)
 {
-    char *filename = "utils/input_slide.txt";
+    char filename[MAX_FILENAME_SIZE];
+    printf("Digite o nome do arquivo: ");
+    scanf("%s", filename);
 
     ByteInfo bytes[256];
     initBytes(bytes);
